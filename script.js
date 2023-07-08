@@ -1,47 +1,43 @@
-const items = document.querySelectorAll("[data-chart-item]")
+const subtitles = document.querySelectorAll(".previous");
+const times = document.querySelectorAll(".time");
+const listItems = document.querySelectorAll("li");
 
-addEventListener("load", ()=>{
-})
+fetch("./data.json")
+  .then((res) => res.json())
+  .then((json) => {
+    const changeValues = (id) => {
+      let timefr = "";
+      switch (id) {
+        case "Day":
+          timefr = "daily";
+          break;
 
-setupChart()
+        case "Week":
+          timefr = "weekly";
+          break;
 
+        case "Month":
+          timefr = "monthly";
+          break;
 
-function setupChart() {
-    getData().then(previous => renderChart(previous))
-}
+        default:
+          break;
+      }
+      times.forEach((element, ind) => {
+        element.textContent = `${json[ind].timeframes[timefr].current}hrs`;
+      });
+      subtitles.forEach((element, ind) => {
+        element.textContent = `Last Day - ${json[ind].timeframes[timefr].previous}hrs`;
+      });
+    };
 
-async function getData() {
-    try {
-        const response = await fetch("/data.json")
-        if (!response.ok) {
-            console.log("Response wasn't ok!")
-            return []
-        }
-        const data = await response.json()
-        return data.map(d => d.previous)
-    } catch (err) {
-        console.log("Yo, some errors happened, err.message:", err.message)
-        return []
-    }
-}
+    listItems.forEach((item) => {
+      item.addEventListener("click", () => {
+        listItems.forEach((item) => (item.className = ""));
+        item.className = "selected";
 
-function renderChart(amounts) {
-    const maxAmount = Math.max(...amounts)
-    const today = mapDay2Index(new Date().getDay())
-    items.forEach((item, index) => {
-        item.querySelector("[data-spending]").textContent = amounts[index].toString()
-        const bar = item.querySelector("[data-bar]")
-        bar.style.height = (amounts[index] / maxAmount) * 100 + "%"
-        bar.classList.add("cha__bar--animate")
-        if (today === index) bar.classList.add("chart__bar--today")
-        bar.addEventListener("transitionend", () => {
-            item.querySelector("[data-chart-container]").style.overflow = "initial"
-        })
-    })
-
-}
-
-function mapDay2Index(day){
-    if (day === 0) return 6
-    return day - 1
-}
+        changeValues(item.id);
+      });
+    });
+  })
+  .catch((err) => console.log(err));
